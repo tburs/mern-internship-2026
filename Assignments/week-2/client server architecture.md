@@ -1,6 +1,6 @@
 # Client-Server Architecture
 
-![Client Server Architecture](architecture.png)
+<img src="architecture.png" width="200">
 
 A client is the device that a user is using to access a website through a web browser. It is the front end for a user and displays information visually on the device. It makes requests when some data is required to the database where the data is stored as it cannot store large amounts of data. But the client cannot directly connect with the database as it brings up security concerns. Hence a "server" is used. The server is a computer/program that reads the requests from the client and responds to it. It is responsible for all the logic and data handling. The server connects to the database and fetches the required information.
 

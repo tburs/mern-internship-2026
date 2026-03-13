@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Manager</title>
+<style>
+    body {
+    text-align: center; }
+
+button{
+    background-color: black;
+    color: white;
+    border: 2px solid black;
+    padding: 8px 16px;
+    margin: 8px;}
+
+button:hover {
+    background-color: white;
+    color: black;
+}
+li{
+    margin-bottom: 25px; }
+</style>
+</head>
+
+<body>
+<h2>Student Manager</h2>
+<input type="text" id="name" placeholder="Student Name">
+<input type="number" id="mark1" placeholder="Mark 1">
+<input type="number" id="mark2" placeholder="Mark 2">
+<input type="number" id="mark3" placeholder="Mark 3">
+<button onclick="addStudent()">Add Student</button>
+<br><br>
+
+<h3>Students</h3>
+<ul id="studentList"></ul>
+<button onclick="calculateAverageMarks()">Calculate Average</button>
+
+<script src="studentManager.js"></script>
+
+</body>
+</html>

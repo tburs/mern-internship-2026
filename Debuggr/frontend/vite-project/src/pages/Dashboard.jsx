@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import AdminHeader from "../components/AdminHeader";
 
-
 const todayString = () => {
   return new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -29,7 +28,7 @@ const Modal = ({ isOpen, onClose, children, title }) => {
   );
 };
 
-/* Fieldrow (label + value, two-column stylle */
+/* Fieldrow (label + value, two-column style */
 const FieldRow = ({ label, children }) => (
   <div style={fieldRow}>
     <span style={fieldLabel}>{label}</span>
@@ -39,20 +38,29 @@ const FieldRow = ({ label, children }) => (
 
 /* Dashboard */
 const Dashboard = () => {
-  const [user, setUser]       = useState(null);
+  const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [visibleKeys, setVisibleKeys] = useState({});
 
   const [editingStatus, setEditingStatus] = useState(null);
-const [showJoinModal, setShowJoinModal] = useState(false);
-const [joinKey, setJoinKey] = useState("");
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joinKey, setJoinKey] = useState("");
 
   /* form state */
-  const [title, setTitle]           = useState("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("ongoing");
-  const [createdOn]                 = useState(todayString);
+  const [createdOn] = useState(todayString);
+
+  const [showBugModal, setShowBugModal] = useState(false);
+  const [bugs, setBugs] = useState([]);
+  const [bugTitle, setBugTitle] = useState("");
+  const [bugDescription, setBugDescription] = useState("");
+  const [bugProject, setBugProject] = useState("");
+  const [bugPriority, setBugPriority] = useState("medium");
+  const [bugStatus, setBugStatus] = useState("open");
+  const [assignedTo, setAssignedTo] = useState("");
 
   const [stats, setStats] = useState({
     totalBugs: 0,
@@ -67,26 +75,62 @@ const [joinKey, setJoinKey] = useState("");
   }, []);
 
   /* fetch projects */
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => {
+    fetchProjects();
+    fetchBugs();
+    fetchStats();
+  }, []);
 
   const fetchProjects = async () => {
-  try {
-    const res = await fetch("http://localhost:5000/api/projects/my-projects", {
+    try {
+      const res = await fetch("http://localhost:5000/api/projects/my-projects", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProjects(data);
+        setStats(prev => ({ ...prev, totalProjects: data.length }));
+      } else {
+        console.error("Error fetching projects:", data.message);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
+
+  //fetching bugs
+  const fetchBugs = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/dashboard/recent-bugs", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setBugs(data);
+      } else {
+        console.error("Error fetching bugs:", data.message);
+      }
+    } catch (err) {
+      console.error("Fetch bugs error:", err);
+    }
+  };
+
+  const fetchStats = async () => {
+    const res = await fetch("http://localhost:5000/api/dashboard/stats", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
+
     const data = await res.json();
-    if (res.ok) {
-      setProjects(data);
-      setStats(prev => ({ ...prev, totalProjects: data.length }));
-    } else {
-      console.error("Error fetching projects:", data.message);
-    }
-  } catch (err) {
-    console.error("Fetch error:", err);
-  }
-};
+    setStats(data);
+  };
 
   /* create project */
   const handleCreateProject = async (e) => {
@@ -113,40 +157,111 @@ const [joinKey, setJoinKey] = useState("");
     }
   };
 
-{/*join project */} 
-const handleJoinProject = async (e) => {
-  e.preventDefault();
+  //join project 
+  const handleJoinProject = async (e) => {
+    e.preventDefault();
 
-  try {
-    const res = await fetch("http://localhost:5000/api/projects/join", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({ projectKey: joinKey }),
-    });
+    try {
+      const res = await fetch("http://localhost:5000/api/projects/join", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ projectKey: joinKey }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
-      alert("Joined project successfully 😤🔥");
-      setShowJoinModal(false);
-      setJoinKey("");
-      fetchProjects();
-    } else {
-      alert(data.message);
+      if (res.ok) {
+        alert("Joined project successfully 😤🔥");
+        setShowJoinModal(false);
+        setJoinKey("");
+        fetchProjects();
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
     }
-  } catch (err) {
-    console.error(err);
+  };
+
+  //bug logging handler
+  const handleCreateBug = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:5000/api/bugs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          title: bugTitle,
+          description: bugDescription,
+          projectId: bugProject,
+          priority: bugPriority,
+          status: bugStatus,
+          ...(assignedTo && { assignedTo }),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        await fetchBugs();
+
+        setShowBugModal(false);
+
+        // reset fields
+        setBugTitle("");
+        setBugDescription("");
+        setBugProject("");
+        setBugPriority("medium");
+        setBugStatus("open");
+        setAssignedTo("");
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+const handleDeleteBug = async (bug) => {
+  const currentUserId = user?.id || user?.userId;
+
+  const isAllowed =
+    bug.reportedBy?._id === currentUserId ||
+    bug.projectId?.teamLead?._id === currentUserId; // 🔥 FIXED
+
+  if (!isAllowed) {
+    alert("Only the team lead or bug creator can delete this bug 🚫");
+    return;
   }
+
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this bug?"
+  );
+
+  if (!confirmDelete) return;
+
+  await fetch(`http://localhost:5000/api/bugs/${bug._id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+
+  fetchBugs();
 };
 
 
   const openModal = () => {
     setShowModal(true);
   };
-  
+
   const closeModal = () => {
     setShowModal(false);
     setTitle("");
@@ -154,46 +269,46 @@ const handleJoinProject = async (e) => {
     setStatus("ongoing");
   };
 
-//status change handler
-const handleStatusChange = async (projectId, newStatus) => {
-  try {
-    const res = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({ status: newStatus }),
-    });
+  //status change handler
+  const handleStatusChange = async (projectId, newStatus) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
-    const data = await res.json();
-    if (res.ok) {
-      setProjects((prev) =>
-        prev.map((p) =>
-          p._id === projectId ? { ...p, status: newStatus } : p
-        )
-      );
-    } else {
-      alert(data.message);
+      const data = await res.json();
+      if (res.ok) {
+        setProjects((prev) =>
+          prev.map((p) =>
+            p._id === projectId ? { ...p, status: newStatus } : p
+          )
+        );
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
     }
-  } catch (err) {
-    console.error(err);
-  }
-};
+  };
 
-
-  /* render*/
+  //render
   return (
     <div style={rootLayout}>
-      <Sidebar onCreateProject={openModal} 
-      onJoinProject={() => setShowJoinModal(true)}
+      <Sidebar
+        onCreateProject={openModal}
+        onJoinProject={() => setShowJoinModal(true)}
+        onLogBug={() => setShowBugModal(true)}
       />
 
       <div style={mainArea}>
         <AdminHeader user={user} />
 
         <div style={contentWrapper}>
-
           {/* user specific greeting*/}
           <header style={{ marginBottom: "30px" }}>
             <h1 style={titleStyle}>
@@ -210,9 +325,9 @@ const handleStatusChange = async (projectId, newStatus) => {
 
           {/* Stats */}
           <div style={statsContainer}>
-            <StatBox title="Total Bugs"    value={stats.totalBugs} />
-            <StatBox title="Solved Bugs"   value={stats.solvedBugs} />
-            <StatBox title="Projects"      value={stats.totalProjects} />
+            <StatBox title="Total Bugs" value={stats.totalBugs} />
+            <StatBox title="Solved Bugs" value={stats.solvedBugs} />
+            <StatBox title="Projects" value={stats.totalProjects} />
           </div>
 
           {/* Projects */}
@@ -238,36 +353,33 @@ const handleStatusChange = async (projectId, newStatus) => {
                         <div style={{ fontWeight: "500" }}>{p.title}</div>
                         <div style={roleBadge}>
                           {p.teamLead?._id === user?.id ||
-                           p.teamLead?._id === user?.userId
+                          p.teamLead?._id === user?.userId
                             ? "Team Lead"
                             : "Member"}
                         </div>
                       </td>
                       <td style={td}>
-                        
                         {/* Status dropdown */}
                         {editingStatus === p._id ? (
-  <select
-    value={p.status}
-    onChange={(e) => handleStatusChange(p._id, e.target.value)}
-    onBlur={() => setEditingStatus(null)}
-    style={selectStyle}
-    autoFocus
-  >
-    <option value="ongoing">🟢 Ongoing</option>
-    <option value="paused">🟡 Paused</option>
-    <option value="completed">✅ Completed</option>
-  </select>
-) : (
-  <span
-    style={{ ...getStatusPill(p.status), cursor: "pointer" }}
-    onClick={() => setEditingStatus(p._id)}
-  >
-    {p.status}
-  </span>
-)}
-
-
+                          <select
+                            value={p.status}
+                            onChange={(e) => handleStatusChange(p._id, e.target.value)}
+                            onBlur={() => setEditingStatus(null)}
+                            style={selectStyle}
+                            autoFocus
+                          >
+                            <option value="ongoing">🟢 Ongoing</option>
+                            <option value="paused">🟡 Paused</option>
+                            <option value="completed">✅ Completed</option>
+                          </select>
+                        ) : (
+                          <span
+                            style={{ ...getStatusPill(p.status), cursor: "pointer" }}
+                            onClick={() => setEditingStatus(p._id)}
+                          >
+                            {p.status}
+                          </span>
+                        )}
                       </td>
                       <td style={td}>
                         <span
@@ -295,120 +407,305 @@ const handleStatusChange = async (projectId, newStatus) => {
           </section>
 
           {/* Recent Bugs */}
-          <section>
-            <div style={sectionHeader}>
-              <h2 style={sectionTitle}>Recent Bugs</h2>
-            </div>
-            <Empty
-              text="No bugs reported 🐞"
-              sub="You're all clear for now!"
-            />
-          </section>
+          
+<section>
+  <div style={sectionHeader}>
+    <h2 style={sectionTitle}>Recent Bugs</h2>
+  </div>
+
+  {bugs && bugs.length > 0 ? (
+    <table style={tableStyle}>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Project</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Assigned To</th>
+          <th>Actions</th> 
+        </tr>
+      </thead>
+
+      <tbody>
+        {bugs.map((b) => {
+          const currentUserId = user?.id || user?.userId;
+
+          return (
+            <tr key={b._id}>
+              <td>{b.title}</td>
+
+              <td>{b.projectId?.title}</td>
+
+              <td>
+                <span style={getPriorityStyle(b.priority)}>
+                  {b.priority}
+                </span>
+              </td>
+
+              <td>
+                <span style={getBugStatusStyle(b.status)}>
+                  {b.status}
+                </span>
+              </td>
+
+              <td>
+                {b.assignedTo?.username || "Unassigned"}
+              </td>
+
+              <td>
+  <button
+    onClick={() => handleDeleteBug(b)}
+    style={{
+      border: "none",
+      background: "transparent",
+      cursor: "pointer",
+      color: "#ef4444",
+      fontSize: "16px",
+    }}
+  >
+    🗑️
+  </button>
+</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  ) : (
+    <Empty
+      text="No bugs reported 🐞"
+      sub="You're all clear for now!"
+    />
+  )}
+</section>
+
+          {/* ── Modal ── */}
+          <Modal
+            isOpen={showModal}
+            onClose={closeModal}
+            title="Create Project"
+          >
+            <form onSubmit={handleCreateProject}>
+              {/* Title — full-width input at top like the reference */}
+              <input
+                placeholder="Project title"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                style={titleInput}
+                required
+              />
+
+              <div style={modalDivider} />
+
+              {/* Two-column detail rows */}
+              <FieldRow label="Role">
+                <span style={rolePill}>Team Lead</span>
+              </FieldRow>
+
+              <FieldRow label="Status">
+                <select
+                  value={status}
+                  onChange={e => setStatus(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="ongoing">🟢 Ongoing</option>
+                  <option value="paused">🟡 Paused</option>
+                  <option value="completed">✅ Completed</option>
+                </select>
+              </FieldRow>
+
+              <FieldRow label="Created on">
+                <span style={metaText}>{createdOn}</span>
+              </FieldRow>
+
+              <FieldRow label="Description">
+                <textarea
+                  placeholder="What is this project about?"
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  style={textareaStyle}
+                  rows={3}
+                />
+              </FieldRow>
+
+              <div style={modalDivider} />
+
+              {/* Actions */}
+              <div style={modalFooter}>
+                <button type="button" onClick={closeModal} style={cancelBtn}>
+                  Cancel
+                </button>
+                <button type="submit" style={createBtn}>
+                  Create Project
+                </button>
+              </div>
+            </form>
+          </Modal>
+
+          {/* Join Project Modal */}
+          <Modal
+            isOpen={showJoinModal}
+            onClose={() => setShowJoinModal(false)}
+            title="Join Project"
+          >
+            <form onSubmit={handleJoinProject}>
+              <input
+                placeholder="Enter project key (XXXXXX)"
+                value={joinKey}
+                onChange={(e) => setJoinKey(e.target.value.toUpperCase())}
+                style={titleInput}
+                required
+              />
+
+              <div style={modalDivider} />
+
+              <div style={modalFooter}>
+                <button
+                  type="button"
+                  onClick={() => setShowJoinModal(false)}
+                  style={cancelBtn}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" style={createBtn}>
+                  Join Project
+                </button>
+              </div>
+            </form>
+          </Modal>
+
+          {/* Log Bug Modal */}
+          <Modal
+            isOpen={showBugModal}
+            onClose={() => setShowBugModal(false)}
+            title="Log Bug"
+          >
+            <form onSubmit={handleCreateBug}>
+              <input
+                placeholder="Bug title"
+                value={bugTitle}
+                onChange={(e) => setBugTitle(e.target.value)}
+                style={titleInput}
+                required
+              />
+
+              <div style={modalDivider} />
+
+              <FieldRow label="Project">
+                <select
+                  value={bugProject}
+                  onChange={(e) => setBugProject(e.target.value)}
+                  style={selectStyle}
+                  required
+                >
+                  <option value="">Select project</option>
+                  {projects.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.title}
+                    </option>
+                  ))}
+                </select>
+              </FieldRow>
+
+              <FieldRow label="Priority">
+                <select
+                  value={bugPriority}
+                  onChange={(e) => setBugPriority(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="low">🟢 Low</option>
+                  <option value="medium">🟡 Medium</option>
+                  <option value="high">🔴 High</option>
+                </select>
+              </FieldRow>
+
+              <FieldRow label="Status">
+                <select
+                  value={bugStatus}
+                  onChange={(e) => setBugStatus(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="open">Open</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </FieldRow>
+
+              <FieldRow label="Reported by">
+                <span style={metaText}>{user?.username}</span>
+              </FieldRow>
+
+              <FieldRow label="Reported on">
+                <span style={metaText}>{todayString()}</span>
+              </FieldRow>
+
+              <FieldRow label="Description">
+                <textarea
+                  value={bugDescription}
+                  onChange={(e) => setBugDescription(e.target.value)}
+                  style={textareaStyle}
+                  rows={3}
+                />
+              </FieldRow>
+
+              <FieldRow label="Assign To">
+                <select
+                  value={assignedTo}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="">Unassigned</option>
+                  {(() => {
+                    const project = projects.find((p) => p._id === bugProject);
+
+                    if (!project) return null;
+
+                    const uniqueMembers = project.members?.filter(
+    (m, index, self) =>
+      index === self.findIndex((x) => x.userId._id === m.userId._id)
+  );
+
+                    return (
+                      <>
+                        {/* team lead */}
+                        {project.teamLead && (
+                          <option value={project.teamLead._id}>
+                            {project.teamLead.username} (Lead)
+                          </option>
+                        )}
+
+                        {/* members */}
+                        {project.members?.map((m) => (
+                          <option key={m.userId?._id} value={m.userId?._id}>
+                            {m.userId?.username || "Unknown"}
+                          </option>
+                        ))}
+                      </>
+                    );
+                  })()}
+                </select>
+              </FieldRow>
+
+              <div style={modalDivider} />
+
+              <div style={modalFooter}>
+                <button
+                  type="button"
+                  onClick={() => setShowBugModal(false)}
+                  style={cancelBtn}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" style={createBtn}>
+                  Log Bug
+                </button>
+              </div>
+            </form>
+          </Modal>
         </div>
       </div>
-
-      {/* ── Modal ── */}
-      <Modal
-        isOpen={showModal}
-        onClose={closeModal}
-        title="Create Project"
-      >
-        <form onSubmit={handleCreateProject}>
-
-          {/* Title — full-width input at top like the reference */}
-          <input
-            placeholder="Project title"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            style={titleInput}
-            required
-          />
-
-          <div style={modalDivider} />
-
-          {/* Two-column detail rows */}
-          <FieldRow label="Role">
-            <span style={rolePill}>Team Lead</span>
-          </FieldRow>
-
-          <FieldRow label="Status">
-            <select
-              value={status}
-              onChange={e => setStatus(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="ongoing">🟢 Ongoing</option>
-              <option value="paused">🟡 Paused</option>
-              <option value="completed">✅ Completed</option>
-            </select>
-          </FieldRow>
-
-          <FieldRow label="Created on">
-            <span style={metaText}>{createdOn}</span>
-          </FieldRow>
-
-
-          <FieldRow label="Description">
-            <textarea
-              placeholder="What is this project about?"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              style={textareaStyle}
-              rows={3}
-            />
-          </FieldRow>
-
-          <div style={modalDivider} />
-
-          {/* Actions */}
-          <div style={modalFooter}>
-            <button type="button" onClick={closeModal} style={cancelBtn}>
-              Cancel
-            </button>
-            <button type="submit" style={createBtn}>
-              Create Project
-            </button>
-          </div>
-
-        </form>
-      </Modal>
-
-<Modal
-  isOpen={showJoinModal}
-  onClose={() => setShowJoinModal(false)}
-  title="Join Project"
->
-  <form onSubmit={handleJoinProject}>
-
-
-    <input
-      placeholder="Enter project key (PROJECT-XXXXXX)"
-      value={joinKey}
-      onChange={(e) => setJoinKey(e.target.value.toUpperCase())}
-      style={titleInput}
-      required
-    />
-
-    <div style={modalDivider} />
-
-    <div style={modalFooter}>
-      <button
-        type="button"
-        onClick={() => setShowJoinModal(false)}
-        style={cancelBtn}
-      >
-        Cancel
-      </button>
-
-      <button type="submit" style={createBtn}>
-        Join Project
-      </button>
-    </div>
-
-  </form>
-</Modal>
-
-
     </div>
   );
 };
@@ -431,10 +728,10 @@ const Empty = ({ text, sub }) => (
 /* ─── Status pill helper ───────────────────────────────── */
 const getStatusPill = (status) => {
   const map = {
-    active:    { background: "#dcfce7", color: "#15803d" },
+    active: { background: "#dcfce7", color: "#15803d" },
     "on hold": { background: "#fef9c3", color: "#a16207" },
     completed: { background: "#e0f2fe", color: "#0369a1" },
-    ongoing:   { background: "#dcfce7", color: "#15803d" },
+    ongoing: { background: "#dcfce7", color: "#15803d" },
   };
   const colors = map[status?.toLowerCase()] || { background: "#f3f4f6", color: "#374151" };
   return {
@@ -448,6 +745,41 @@ const getStatusPill = (status) => {
 };
 
 /* ─── Styles (unchanged) ───────────────────────────────── */
+
+const pill = {
+  padding: "6px 12px",
+  borderRadius: "999px",
+  fontSize: "12px",
+  fontWeight: "500",
+  display: "inline-block",
+};
+
+const getPriorityStyle = (priority) => {
+  switch (priority) {
+    case "high":
+      return { ...pill, background: "#fee2e2", color: "#dc2626" };
+    case "medium":
+      return { ...pill, background: "#fef3c7", color: "#d97706" };
+    case "low":
+      return { ...pill, background: "#dcfce7", color: "#16a34a" };
+    default:
+      return pill;
+  }
+};
+
+const getBugStatusStyle = (status) => {
+  switch (status) {
+    case "open":
+      return { ...pill, background: "#dbeafe", color: "#2563eb" };
+    case "in-progress":
+      return { ...pill, background: "#fef3c7", color: "#d97706" };
+    case "closed":
+      return { ...pill, background: "#dcfce7", color: "#16a34a" };
+    default:
+      return pill;
+  }
+};
+
 const rootLayout = {
   display: "flex",
   minHeight: "100vh",
@@ -479,7 +811,7 @@ const sectionHeader = {
 };
 
 const sectionTitle = { color: "#22c55e", fontSize: "20px" };
-const linkStyle    = { color: "#22c55e", textDecoration: "none" };
+const linkStyle = { color: "#22c55e", textDecoration: "none" };
 
 const statsContainer = {
   display: "grid",
@@ -498,6 +830,7 @@ const tableStyle = {
   width: "100%",
   borderCollapse: "collapse",
   tableLayout: "fixed",
+  color: "#111111",
 };
 
 const roleBadge = {
@@ -640,6 +973,8 @@ const keyPill = {
   color: "#374151",
   letterSpacing: "1px",
 };
+
+
 
 const selectStyle = {
   border: "1px solid #e5e7eb",

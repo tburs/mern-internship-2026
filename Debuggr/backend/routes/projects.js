@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const protect = require('./middleware/auth'); // ✅ FIXED PATH
+const protect = require('./middleware/auth'); 
 const Project = require("../models/Project");
 
-/* 🔹 CREATE PROJECT */
+//creating project
 router.post("/", protect, async (req, res) => {
   try {
     const { title, description, status } = req.body;
@@ -28,7 +28,7 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-/* 🔹 GET USER PROJECTS */
+/* to get the user projects*/
 router.get('/my-projects', protect, async (req, res) => { // ✅ FIXED
   try {
     const projects = await Project.find({
@@ -44,7 +44,7 @@ router.get('/my-projects', protect, async (req, res) => { // ✅ FIXED
   }
 });
 
-/* 🔹 GET ALL PROJECTS */
+/*  to get all projects */
 router.get("/", protect, async (req, res) => {
   try {
     const projects = await Project.find()
@@ -52,6 +52,31 @@ router.get("/", protect, async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.json(projects);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+//backend route for status changing in dashboard
+router.put("/:id", protect, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // only allow team lead to update
+    if (project.teamLead.toString() !== req.user.userId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    project.status = status;
+    await project.save();
+
+    res.json({ message: "Status updated", project });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

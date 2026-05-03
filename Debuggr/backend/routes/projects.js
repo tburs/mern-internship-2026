@@ -12,7 +12,7 @@ router.post("/", protect, async (req, res) => {
     const project = await Project.create({
       title,
       description,
-      status: status || "ongoing", // ✅ FIXED
+      status: status || "ongoing", 
       teamLead: req.user.userId,
     });
 

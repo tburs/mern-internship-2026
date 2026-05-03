@@ -12,7 +12,7 @@ const todayString = () => {
   });
 };
 
-/* ─── Modal ────────────────────────────────────────────── */
+/* Modal */
 const Modal = ({ isOpen, onClose, children, title }) => {
   if (!isOpen) return null;
   return (
@@ -29,7 +29,7 @@ const Modal = ({ isOpen, onClose, children, title }) => {
   );
 };
 
-/* ─── Field row (label + value, two-column style) ──────── */
+/* Fieldrow (label + value, two-column stylle */
 const FieldRow = ({ label, children }) => (
   <div style={fieldRow}>
     <span style={fieldLabel}>{label}</span>
@@ -37,7 +37,7 @@ const FieldRow = ({ label, children }) => (
   </div>
 );
 
-/* ─── Dashboard ────────────────────────────────────────── */
+/* Dashboard */
 const Dashboard = () => {
   const [user, setUser]       = useState(null);
   const [projects, setProjects] = useState([]);
@@ -45,6 +45,8 @@ const Dashboard = () => {
   const [visibleKeys, setVisibleKeys] = useState({});
 
   const [editingStatus, setEditingStatus] = useState(null);
+const [showJoinModal, setShowJoinModal] = useState(false);
+const [joinKey, setJoinKey] = useState("");
 
   /* form state */
   const [title, setTitle]           = useState("");
@@ -67,16 +69,24 @@ const Dashboard = () => {
   /* fetch projects */
   useEffect(() => { fetchProjects(); }, []);
 
-  const fetchProjects = () => {
-    fetch("http://localhost:5000/api/projects/my-projects", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then(r => r.json())
-      .then(data => {
-        setProjects(data);
-        setStats(prev => ({ ...prev, totalProjects: data.length }));
-      });
-  };
+  const fetchProjects = async () => {
+  try {
+    const res = await fetch("http://localhost:5000/api/projects/my-projects", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setProjects(data);
+      setStats(prev => ({ ...prev, totalProjects: data.length }));
+    } else {
+      console.error("Error fetching projects:", data.message);
+    }
+  } catch (err) {
+    console.error("Fetch error:", err);
+  }
+};
 
   /* create project */
   const handleCreateProject = async (e) => {
@@ -102,6 +112,36 @@ const Dashboard = () => {
       alert(data.message);
     }
   };
+
+{/*join project */} 
+const handleJoinProject = async (e) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch("http://localhost:5000/api/projects/join", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ projectKey: joinKey }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Joined project successfully 😤🔥");
+      setShowJoinModal(false);
+      setJoinKey("");
+      fetchProjects();
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 
   const openModal = () => {
     setShowModal(true);
@@ -145,7 +185,9 @@ const handleStatusChange = async (projectId, newStatus) => {
   /* render*/
   return (
     <div style={rootLayout}>
-      <Sidebar onCreateProject={openModal} />
+      <Sidebar onCreateProject={openModal} 
+      onJoinProject={() => setShowJoinModal(true)}
+      />
 
       <div style={mainArea}>
         <AdminHeader user={user} />
@@ -330,6 +372,43 @@ const handleStatusChange = async (projectId, newStatus) => {
 
         </form>
       </Modal>
+
+<Modal
+  isOpen={showJoinModal}
+  onClose={() => setShowJoinModal(false)}
+  title="Join Project"
+>
+  <form onSubmit={handleJoinProject}>
+
+
+    <input
+      placeholder="Enter project key (PROJECT-XXXXXX)"
+      value={joinKey}
+      onChange={(e) => setJoinKey(e.target.value.toUpperCase())}
+      style={titleInput}
+      required
+    />
+
+    <div style={modalDivider} />
+
+    <div style={modalFooter}>
+      <button
+        type="button"
+        onClick={() => setShowJoinModal(false)}
+        style={cancelBtn}
+      >
+        Cancel
+      </button>
+
+      <button type="submit" style={createBtn}>
+        Join Project
+      </button>
+    </div>
+
+  </form>
+</Modal>
+
+
     </div>
   );
 };

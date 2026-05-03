@@ -44,6 +44,8 @@ const Dashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [visibleKeys, setVisibleKeys] = useState({});
 
+  const [editingStatus, setEditingStatus] = useState(null);
+
   /* form state */
   const [title, setTitle]           = useState("");
   const [description, setDescription] = useState("");
@@ -112,7 +114,35 @@ const Dashboard = () => {
     setStatus("ongoing");
   };
 
-  /* ── render ── */
+//status change handler
+const handleStatusChange = async (projectId, newStatus) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      setProjects((prev) =>
+        prev.map((p) =>
+          p._id === projectId ? { ...p, status: newStatus } : p
+        )
+      );
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+  /* render*/
   return (
     <div style={rootLayout}>
       <Sidebar onCreateProject={openModal} />
@@ -122,7 +152,7 @@ const Dashboard = () => {
 
         <div style={contentWrapper}>
 
-          {/* Greeting */}
+          {/* user specific greeting*/}
           <header style={{ marginBottom: "30px" }}>
             <h1 style={titleStyle}>
               Hello,{" "}
@@ -172,9 +202,30 @@ const Dashboard = () => {
                         </div>
                       </td>
                       <td style={td}>
-                        <span style={getStatusPill(p.status)}>
-                          {p.status}
-                        </span>
+                        
+                        {/* Status dropdown */}
+                        {editingStatus === p._id ? (
+  <select
+    value={p.status}
+    onChange={(e) => handleStatusChange(p._id, e.target.value)}
+    onBlur={() => setEditingStatus(null)}
+    style={selectStyle}
+    autoFocus
+  >
+    <option value="ongoing">🟢 Ongoing</option>
+    <option value="paused">🟡 Paused</option>
+    <option value="completed">✅ Completed</option>
+  </select>
+) : (
+  <span
+    style={{ ...getStatusPill(p.status), cursor: "pointer" }}
+    onClick={() => setEditingStatus(p._id)}
+  >
+    {p.status}
+  </span>
+)}
+
+
                       </td>
                       <td style={td}>
                         <span
@@ -208,7 +259,7 @@ const Dashboard = () => {
             </div>
             <Empty
               text="No bugs reported 🐞"
-              sub="You're all clear… for now 😏"
+              sub="You're all clear for now!"
             />
           </section>
         </div>

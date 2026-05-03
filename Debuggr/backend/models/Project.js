@@ -27,8 +27,23 @@ const projectSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+members: [
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    role: {
+      type: String,
+      default: "member",
+    },
+  },
+],
+
   },
   { timestamps: true }
+  
 );
 
 module.exports = mongoose.model("Project", projectSchema);

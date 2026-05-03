@@ -28,6 +28,45 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
+
+/* to join project */
+router.post("/join", protect, async (req, res) => {
+  try {
+    const { projectKey } = req.body;
+
+    const project = await Project.findOne({ projectKey });
+
+    if (!project) {
+      return res.status(404).json({ message: "Invalid project key" });
+    }
+
+    // ❌ already member?
+    const alreadyMember =
+      project.teamLead.toString() === req.user.userId ||
+      project.members.some(
+        (m) => m.userId.toString() === req.user.userId
+      );
+
+    if (alreadyMember) {
+      return res.status(400).json({ message: "Already in project" });
+    }
+
+    // ✅ add user
+    project.members.push({
+      userId: req.user.userId,
+      role: "member",
+    });
+
+    await project.save();
+
+    res.json({ message: "Joined project successfully!" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+//till here
+
 /* to get the user projects*/
 router.get('/my-projects', protect, async (req, res) => { // ✅ FIXED
   try {

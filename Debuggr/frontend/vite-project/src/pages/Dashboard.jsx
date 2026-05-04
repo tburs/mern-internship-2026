@@ -44,6 +44,9 @@ const Dashboard = () => {
   const [visibleKeys, setVisibleKeys] = useState({});
 
   const [editingStatus, setEditingStatus] = useState(null);
+  const [editingPriority, setEditingPriority] = useState(null);
+const [editingBugStatus, setEditingBugStatus] = useState(null);
+const [editingAssign, setEditingAssign] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinKey, setJoinKey] = useState("");
 
@@ -257,6 +260,49 @@ const handleDeleteBug = async (bug) => {
   fetchBugs();
 };
 
+// 🔴 Update priority
+const handlePriorityChange = async (bugId, newPriority) => {
+  await fetch(`http://localhost:5000/api/bugs/${bugId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify({ priority: newPriority }),
+  });
+
+  fetchBugs();
+};
+
+// 🔵 Update status
+const handleBugStatusChange = async (bugId, newStatus) => {
+  await fetch(`http://localhost:5000/api/bugs/${bugId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify({ status: newStatus }),
+  });
+
+  fetchBugs();
+};
+
+// 🟢 Assign user
+const handleAssignChange = async (bugId, userId) => {
+  await fetch(`http://localhost:5000/api/bugs/${bugId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify({ assignedTo: userId }),
+  });
+
+  fetchBugs();
+};
+
+
 
   const openModal = () => {
     setShowModal(true);
@@ -338,66 +384,111 @@ const handleDeleteBug = async (bug) => {
             </div>
 
             {projects.length > 0 ? (
-              <table style={tableStyle}>
-                <thead>
-                  <tr>
-                    <th style={th}>Title</th>
-                    <th style={th}>Status</th>
-                    <th style={th}>Key</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projects.map((p) => (
-                    <tr key={p._id}>
-                      <td style={td}>
-                        <div style={{ fontWeight: "500" }}>{p.title}</div>
-                        <div style={roleBadge}>
-                          {p.teamLead?._id === user?.id ||
-                          p.teamLead?._id === user?.userId
-                            ? "Team Lead"
-                            : "Member"}
-                        </div>
-                      </td>
-                      <td style={td}>
-                        {/* Status dropdown */}
-                        {editingStatus === p._id ? (
-                          <select
-                            value={p.status}
-                            onChange={(e) => handleStatusChange(p._id, e.target.value)}
-                            onBlur={() => setEditingStatus(null)}
-                            style={selectStyle}
-                            autoFocus
-                          >
-                            <option value="ongoing">🟢 Ongoing</option>
-                            <option value="paused">🟡 Paused</option>
-                            <option value="completed">✅ Completed</option>
-                          </select>
-                        ) : (
-                          <span
-                            style={{ ...getStatusPill(p.status), cursor: "pointer" }}
-                            onClick={() => setEditingStatus(p._id)}
-                          >
-                            {p.status}
-                          </span>
-                        )}
-                      </td>
-                      <td style={td}>
-                        <span
-                          style={keyHidden}
-                          onClick={() =>
-                            setVisibleKeys(prev => ({
-                              ...prev,
-                              [p._id]: !prev[p._id],
-                            }))
-                          }
-                        >
-                          {visibleKeys[p._id] ? p.projectKey : "••••••"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+  <table style={tableStyle}>
+    <thead>
+      <tr>
+        <th style={th}>Title</th>
+        <th style={th}>Status</th>
+
+        {/* Show Key column only if user is team lead in ANY project */}
+        {projects.some(
+          (p) =>
+            p.teamLead?._id === user?.id ||
+            p.teamLead?._id === user?.userId
+        ) && <th style={th}>Key</th>}
+
+        <th style={th}>Members</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {projects.map((p) => {
+        const isTeamLead = p.teamLead?._id === user?.id ||p.teamLead?._id === user?.userId;
+
+        const memberCount =
+          (p.members?.length || 0) + (p.teamLead ? 1 : 0);
+
+        return (
+          <tr key={p._id}>
+            {/* Title */}
+            <td style={td}>
+              <div style={{ fontWeight: "500" }}>{p.title}</div>
+              <div style={roleBadge}>
+                {isTeamLead ? "Team Lead" : "Member"}
+              </div>
+            </td>
+
+            {/* Status */}
+            <td style={td}>
+              {isTeamLead ? (
+                editingStatus === p._id ? (
+                  <select
+                    value={p.status}
+                    onChange={(e) =>
+                      handleStatusChange(p._id, e.target.value)
+                    }
+                    onBlur={() => setEditingStatus(null)}
+                    style={selectStyle}
+                    autoFocus
+                  >
+                    <option value="ongoing">🟢 Ongoing</option>
+                    <option value="paused">🟡 Paused</option>
+                    <option value="completed">✅ Completed</option>
+                  </select>
+                ) : (
+                  <span
+                    style={{
+                      ...getStatusPill(p.status),
+                      cursor: "pointer",
+                    }}
+                    onClick={() => setEditingStatus(p._id)}
+                  >
+                    {p.status}
+                  </span>
+                )
+              ) : (
+                <span style={getStatusPill(p.status)}>
+                  {p.status}
+                </span>
+              )}
+            </td>
+
+            {/* Key (ONLY for team lead) */}
+            {isTeamLead && (
+              <td style={td}>
+                <span
+                  style={keyHidden}
+                  onClick={() =>
+                    setVisibleKeys((prev) => ({
+                      ...prev,
+                      [p._id]: !prev[p._id],
+                    }))
+                  }
+                >
+                  {visibleKeys[p._id] ? p.projectKey : "••••••"}
+                </span>
+              </td>
+            )}
+
+            {/* Members */}
+            <td style={td}>
+              <span
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "20px",
+                  background: "#f3f4f6",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                }}
+              >
+                {memberCount} members
+              </span>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
             ) : (
               <Empty
                 text="No projects yet 🗂️"
@@ -416,60 +507,175 @@ const handleDeleteBug = async (bug) => {
   {bugs && bugs.length > 0 ? (
     <table style={tableStyle}>
       <thead>
-        <tr>
-          <th>Title</th>
-          <th>Project</th>
-          <th>Priority</th>
-          <th>Status</th>
-          <th>Assigned To</th>
-          <th>Actions</th> 
-        </tr>
-      </thead>
+  <tr>
+    <th style={th}>Title</th>
+    <th style={th}>Project</th>
+    <th style={th}>Priority</th>
+    <th style={th}>Status</th>
+    <th style={th}>Assigned To</th>
+    <th style={th}>Actions</th>
+  </tr>
+</thead>
 
-      <tbody>
-        {bugs.map((b) => {
-          const currentUserId = user?.id || user?.userId;
+   <tbody>
+  {bugs.map((b) => {
+    const currentUserId = user?.id || user?.userId;
 
-          return (
-            <tr key={b._id}>
-              <td>{b.title}</td>
+    const isReporter = b.reportedBy?._id === currentUserId;
+    const isTeamLead = b.projectId?.teamLead?._id === currentUserId;
+    const isAssigned = b.assignedTo?._id === currentUserId;
+   console.log("FULL BUG:", JSON.stringify(b, null, 2));
 
-              <td>{b.projectId?.title}</td>
+    return (
+      <tr key={b._id}>
+        {/* Title */}
+        <td style={td}>{b.title}</td>
 
-              <td>
-                <span style={getPriorityStyle(b.priority)}>
-                  {b.priority}
-                </span>
-              </td>
+        {/* Project */}
+        <td style={td}>{b.projectId?.title}</td>
 
-              <td>
-                <span style={getBugStatusStyle(b.status)}>
-                  {b.status}
-                </span>
-              </td>
-
-              <td>
-                {b.assignedTo?.username || "Unassigned"}
-              </td>
-
-              <td>
-  <button
-    onClick={() => handleDeleteBug(b)}
-    style={{
-      border: "none",
-      background: "transparent",
-      cursor: "pointer",
-      color: "#ef4444",
-      fontSize: "16px",
-    }}
-  >
-    🗑️
-  </button>
+        {/* 🔴 PRIORITY (Reporter + Team Lead only) */}
+       <td style={td}>
+  {(isReporter || isTeamLead) ? (
+    editingPriority === b._id ? (
+      <select
+        value={b.priority}
+        onChange={(e) => {
+          handlePriorityChange(b._id, e.target.value);
+        }}
+        onBlur={() => setEditingPriority(null)}
+        style={selectStyle}
+        autoFocus
+      >
+        <option value="low">🟢 Low</option>
+        <option value="medium">🟡 Medium</option>
+        <option value="high">🔴 High</option>
+      </select>
+    ) : (
+      <span
+        style={{ ...getPriorityStyle(b.priority), cursor: "pointer" }}
+        onClick={() => setEditingPriority(b._id)}
+      >
+        {b.priority}
+      </span>
+    )
+  ) : (
+    <span style={getPriorityStyle(b.priority)}>
+      {b.priority}
+    </span>
+  )}
 </td>
-            </tr>
-          );
-        })}
-      </tbody>
+
+        {/* 🔵 STATUS (ONLY assigned person) */}
+        <td style={td}>
+  {(isAssigned || (!b.assignedTo && (isReporter || isTeamLead))) ? (
+    editingBugStatus === b._id ? (
+      <select
+        value={b.status}
+        onChange={(e) => {
+          handleBugStatusChange(b._id, e.target.value);
+        }}
+        onBlur={() => setEditingBugStatus(null)}
+        style={selectStyle}
+        autoFocus
+      >
+        <option value="open">Open</option>
+        <option value="in-progress">In Progress</option>
+        <option value="closed">Closed</option>
+      </select>
+    ) : (
+      <span
+        style={{ ...getBugStatusStyle(b.status), cursor: "pointer" }}
+        onClick={() => setEditingBugStatus(b._id)}
+      >
+        {b.status}
+      </span>
+    )
+  ) : (
+    <span style={getBugStatusStyle(b.status)}>
+      {b.status}
+    </span>
+  )}
+</td>
+
+        {/* 🟢 ASSIGNED TO (Reporter + Team Lead only) */}
+        <td style={td}>
+  {(isReporter || isTeamLead) ? (
+    editingAssign === b._id ? (
+      <select
+        value={b.assignedTo?._id || ""}
+        onChange={(e) => {
+          handleAssignChange(b._id, e.target.value);
+        }}
+        onBlur={() => setEditingAssign(null)}
+        style={selectStyle}
+        autoFocus
+      >
+        <option value="">Unassigned</option>
+
+        {/* Team Lead */}
+        {b.projectId?.teamLead && (
+          <option value={b.projectId.teamLead._id}>
+            {b.projectId.teamLead.username} (Lead)
+          </option>
+        )}
+
+        {/* Members */}
+        {b.projectId?.members?.map((m) => (
+          <option key={m.userId._id} value={m.userId._id}>
+            {m.userId.username}
+          </option>
+        ))}
+      </select>
+    ) : (
+      <span
+        style={{
+          padding: "4px 10px",
+          borderRadius: "6px",
+          border: "1px solid #e5e7eb",
+          cursor: "pointer",
+          fontSize: "13px",
+        }}
+        onClick={() => setEditingAssign(b._id)}
+      >
+        {b.assignedTo?.username || "Unassigned"}
+      </span>
+    )
+  ) : (
+    <span
+      style={{
+        padding: "4px 10px",
+        borderRadius: "6px",
+        border: "1px solid #e5e7eb",
+        fontSize: "13px",
+        opacity: 0.8,
+        cursor: "not-allowed",
+      }}
+    >
+      {b.assignedTo?.username || "Unassigned"}
+    </span>
+  )}
+</td>
+
+        {/* Delete */}
+        <td style={td}>
+          <button
+            onClick={() => handleDeleteBug(b)}
+            style={{
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "#ef4444",
+              fontSize: "20px",
+            }}
+          >
+            🗑️
+          </button>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
     </table>
   ) : (
     <Empty
@@ -830,7 +1036,7 @@ const tableStyle = {
   width: "100%",
   borderCollapse: "collapse",
   tableLayout: "fixed",
-  color: "#111111",
+  color: "#000000",
 };
 
 const roleBadge = {
@@ -844,18 +1050,21 @@ const roleBadge = {
 };
 
 const th = {
-  textAlign: "left",
+  textAlign: "center",
   padding: "12px 16px",
-  borderBottom: "1px solid #e5e7eb",
-  color: "#111827",
+  borderBottom: "1px solid #22c55e",
+  color: "#000000",
   fontWeight: "600",
+  fontSize: "18px",
 };
 
 const td = {
-  textAlign: "left",
+  textAlign: "center",
   padding: "12px 16px",
-  borderBottom: "1px solid #e5e7eb",
-  color: "#111827",
+  borderBottom: "1px solid #c8e6d3",
+  color: "#000000",
+  fontSize: "14px",
+  
 };
 
 const keyHidden = {

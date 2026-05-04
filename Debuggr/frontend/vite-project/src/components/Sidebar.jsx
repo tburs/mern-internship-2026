@@ -1,8 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 
-const Sidebar = ({ onCreateProject , onJoinProject}) => {   // ✅ FIX
+const Sidebar = ({ onCreateProject , onJoinProject, onLogBug}) => {   // F IX
   const location = useLocation();
-
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -25,7 +24,7 @@ const Sidebar = ({ onCreateProject , onJoinProject}) => {   // ✅ FIX
           onClick={onCreateProject}   // ✅ FIX
         />
         <ActionButton label="Join Project" onClick={onJoinProject} />
-        <ActionButton label="Log Bug" />
+        <ActionButton label="Log Bug"  onClick={onLogBug} />
       </div>
 
     </div>

@@ -68,14 +68,16 @@ router.post("/join", protect, async (req, res) => {
 //till here
 
 /* to get the user projects*/
-router.get('/my-projects', protect, async (req, res) => { // ✅ FIXED
+router.get('/my-projects', protect, async (req, res) => {
   try {
     const projects = await Project.find({
       $or: [
         { teamLead: req.user.userId },
         { members: { $elemMatch: { userId: req.user.userId } } }
       ]
-    }).populate('teamLead', 'username');
+    })
+      .populate('teamLead', 'username')
+      .populate('members.userId', 'username'); // 🔥 ADD THIS
 
     res.json(projects);
   } catch (error) {
@@ -88,6 +90,7 @@ router.get("/", protect, async (req, res) => {
   try {
     const projects = await Project.find()
       .populate("teamLead", "username")
+      .populate("members.userId", "username")
       .sort({ createdAt: -1 });
 
     res.json(projects);
@@ -120,5 +123,26 @@ router.put("/:id", protect, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    if (project.teamLead.toString() !== req.user.userId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await project.deleteOne();
+
+    res.json({ message: "Project deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = router;

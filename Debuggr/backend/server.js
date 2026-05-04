@@ -14,7 +14,9 @@ const projectRoutes = require("./routes/projects");
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/projects', projectRoutes);
+app.use("/api/bugs", require("./routes/bugs"));
 app.use('/api/dashboard', require('./routes/dashboard'));
+
 
 /* testing route */
 app.get('/', (req, res) => {

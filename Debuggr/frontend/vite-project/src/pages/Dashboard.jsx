@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import AdminHeader from "../components/AdminHeader";
-import {io} from "socket.io-client";
+import { io } from "socket.io-client";
 
 const todayString = () => {
   return new Date().toLocaleDateString("en-GB", {
@@ -89,42 +89,55 @@ const [editingAssign, setEditingAssign] = useState(null);
 useEffect(() => {
   const socket = io("http://localhost:5000");
 
-  socket.on("bugCreated", () => {
-    console.log("⚡ bug created");
+  console.log("Socket connected");
+
+  /* 🔥 BUG EVENTS */
+  socket.on("bugCreated", (bug) => {
+    console.log("bug created", bug);
     fetchBugs();
     fetchStats();
   });
 
-  socket.on("bugUpdated", () => {
-    console.log("⚡ bug updated");
+  socket.on("bugUpdated", (bug) => {
+    console.log("bug updated", bug);
     fetchBugs();
     fetchStats();
   });
 
-  socket.on("bugDeleted", () => {
-    console.log("⚡ bug deleted");
+  socket.on("bugDeleted", (id) => {
+    console.log(" bug deleted", id);
     fetchBugs();
     fetchStats();
   });
 
-  socket.on("projectCreated", () => {
-    console.log("⚡ project created");
+  /* 🔥 PROJECT EVENTS */
+  socket.on("projectCreated", (project) => {
+    console.log("project created", project);
     fetchProjects();
     fetchStats();
   });
 
-  socket.on("projectUpdated", () => {
-    console.log("⚡ project updated");
+  socket.on("projectUpdated", (project) => {
+    console.log("project updated", project);
     fetchProjects();
   });
 
-  socket.on("projectJoined", () => {
-    console.log("⚡ project joined");
+  socket.on("projectJoined", (project) => {
+    console.log("project joined", project);
     fetchProjects();
     fetchStats();
   });
 
-  return () => socket.disconnect();
+  socket.on("projectDeleted", (id) => {
+    console.log("project deleted", id);
+    fetchProjects();
+    fetchStats();
+  });
+
+  return () => {
+    console.log("Socket disconnected");
+    socket.disconnect();
+  };
 }, []);
 
 

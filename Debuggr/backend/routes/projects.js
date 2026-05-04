@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const protect = require('./middleware/auth'); 
+const protect = require("./middleware/auth");
 const Project = require("../models/Project");
 
-//creating project
+/* CREATE PROJECT */
 router.post("/", protect, async (req, res) => {
   try {
     const { title, description, status } = req.body;
@@ -12,12 +12,16 @@ router.post("/", protect, async (req, res) => {
     const project = await Project.create({
       title,
       description,
-      status: status || "ongoing", 
+      status: status || "ongoing",
       teamLead: req.user.userId,
     });
 
     const populatedProject = await Project.findById(project._id)
-      .populate("teamLead", "username email");
+      .populate("teamLead", "username email")
+      .populate("members.userId", "username");
+
+    // 🔥 SOCKET
+    global.io.emit("projectCreated", populatedProject);
 
     res.status(201).json({
       message: "Project created successfully!",
@@ -28,8 +32,7 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-
-/* to join project */
+/* JOIN PROJECT */
 router.post("/join", protect, async (req, res) => {
   try {
     const { projectKey } = req.body;
@@ -40,7 +43,6 @@ router.post("/join", protect, async (req, res) => {
       return res.status(404).json({ message: "Invalid project key" });
     }
 
-    // ❌ already member?
     const alreadyMember =
       project.teamLead.toString() === req.user.userId ||
       project.members.some(
@@ -51,7 +53,6 @@ router.post("/join", protect, async (req, res) => {
       return res.status(400).json({ message: "Already in project" });
     }
 
-    // ✅ add user
     project.members.push({
       userId: req.user.userId,
       role: "member",
@@ -59,25 +60,30 @@ router.post("/join", protect, async (req, res) => {
 
     await project.save();
 
+    const populatedProject = await Project.findById(project._id)
+      .populate("teamLead", "username")
+      .populate("members.userId", "username");
+
+    // 🔥 SOCKET
+    global.io.emit("projectJoined", populatedProject);
+
     res.json({ message: "Joined project successfully!" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-//till here
-
-/* to get the user projects*/
-router.get('/my-projects', protect, async (req, res) => {
+/* GET USER PROJECTS */
+router.get("/my-projects", protect, async (req, res) => {
   try {
     const projects = await Project.find({
       $or: [
         { teamLead: req.user.userId },
-        { members: { $elemMatch: { userId: req.user.userId } } }
-      ]
+        { members: { $elemMatch: { userId: req.user.userId } } },
+      ],
     })
-      .populate('teamLead', 'username')
-      .populate('members.userId', 'username'); // 🔥 ADD THIS
+      .populate("teamLead", "username")
+      .populate("members.userId", "username");
 
     res.json(projects);
   } catch (error) {
@@ -85,7 +91,7 @@ router.get('/my-projects', protect, async (req, res) => {
   }
 });
 
-/*  to get all projects */
+/* GET ALL PROJECTS */
 router.get("/", protect, async (req, res) => {
   try {
     const projects = await Project.find()
@@ -99,7 +105,7 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
-//backend route for status changing in dashboard
+/* UPDATE PROJECT STATUS */
 router.put("/:id", protect, async (req, res) => {
   try {
     const { status } = req.body;
@@ -110,7 +116,6 @@ router.put("/:id", protect, async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // only allow team lead to update
     if (project.teamLead.toString() !== req.user.userId) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -118,12 +123,20 @@ router.put("/:id", protect, async (req, res) => {
     project.status = status;
     await project.save();
 
-    res.json({ message: "Status updated", project });
+    const updatedProject = await Project.findById(project._id)
+      .populate("teamLead", "username")
+      .populate("members.userId", "username");
+
+    // 🔥 SOCKET
+    global.io.emit("projectUpdated", updatedProject);
+
+    res.json({ message: "Status updated", project: updatedProject });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
+/* DELETE PROJECT */
 router.delete("/:id", protect, async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -138,11 +151,13 @@ router.delete("/:id", protect, async (req, res) => {
 
     await project.deleteOne();
 
+    // 🔥 SOCKET
+    global.io.emit("projectDeleted", project._id);
+
     res.json({ message: "Project deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
 
 module.exports = router;

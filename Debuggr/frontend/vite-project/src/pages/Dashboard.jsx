@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import AdminHeader from "../components/AdminHeader";
+import {io} from "socket.io-client";
 
 const todayString = () => {
   return new Date().toLocaleDateString("en-GB", {
@@ -83,6 +84,49 @@ const [editingAssign, setEditingAssign] = useState(null);
     fetchBugs();
     fetchStats();
   }, []);
+
+//socket connection
+useEffect(() => {
+  const socket = io("http://localhost:5000");
+
+  socket.on("bugCreated", () => {
+    console.log("⚡ bug created");
+    fetchBugs();
+    fetchStats();
+  });
+
+  socket.on("bugUpdated", () => {
+    console.log("⚡ bug updated");
+    fetchBugs();
+    fetchStats();
+  });
+
+  socket.on("bugDeleted", () => {
+    console.log("⚡ bug deleted");
+    fetchBugs();
+    fetchStats();
+  });
+
+  socket.on("projectCreated", () => {
+    console.log("⚡ project created");
+    fetchProjects();
+    fetchStats();
+  });
+
+  socket.on("projectUpdated", () => {
+    console.log("⚡ project updated");
+    fetchProjects();
+  });
+
+  socket.on("projectJoined", () => {
+    console.log("⚡ project joined");
+    fetchProjects();
+    fetchStats();
+  });
+
+  return () => socket.disconnect();
+}, []);
+
 
   const fetchProjects = async () => {
     try {
@@ -524,7 +568,7 @@ const handleAssignChange = async (bugId, userId) => {
     const isReporter = b.reportedBy?._id === currentUserId;
     const isTeamLead = b.projectId?.teamLead?._id === currentUserId;
     const isAssigned = b.assignedTo?._id === currentUserId;
-   console.log("FULL BUG:", JSON.stringify(b, null, 2));
+   
 
     return (
       <tr key={b._id}>

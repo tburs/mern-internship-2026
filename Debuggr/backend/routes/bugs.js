@@ -39,6 +39,9 @@ router.post("/", protect, async (req, res) => {
       .populate("reportedBy", "username")
       .populate("assignedTo", "username");
 
+    // 🔥 SOCKET EVENT
+    global.io.emit("bugCreated", populatedBug);
+
     res.status(201).json({ bug: populatedBug });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -132,6 +135,9 @@ router.put("/:id", protect, async (req, res) => {
       .populate("reportedBy", "username")
       .populate("assignedTo", "username");
 
+    // 🔥 SOCKET EVENT
+    global.io.emit("bugUpdated", updatedBug);
+
     res.json(updatedBug);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -158,6 +164,9 @@ router.delete("/:id", protect, async (req, res) => {
     }
 
     await bug.deleteOne();
+
+    // 🔥 SOCKET EVENT
+    global.io.emit("bugDeleted", bug._id);
 
     res.json({ message: "Bug deleted" });
   } catch (err) {

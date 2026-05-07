@@ -17,11 +17,11 @@ const Landing = () => {
             style={styles.loginButton}
             onClick={() => navigate("/Login")}
             onMouseEnter={e => {
-              e.currentTarget.style.backgroundColor = "#ffffff";
+              e.currentTarget.style.backgroundColor = "#000000";
               e.currentTarget.style.transform = "translateY(-5px)";
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.backgroundColor = "#22c553";
+              e.currentTarget.style.backgroundColor = "#22c55e";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -32,13 +32,13 @@ const Landing = () => {
             style={styles.registerButton}
             onClick={() => navigate("/Register")}
             onMouseEnter={e => {
-              e.currentTarget.style.borderColor = "#22c553";
-              e.currentTarget.style.color = "#22c553";
+              e.currentTarget.style.borderColor = "#22c55e";
+              e.currentTarget.style.color = "#22c55e";
               e.currentTarget.style.transform = "translateY(-5px)";
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.borderColor = "#333";
-              e.currentTarget.style.color = "#999";
+              e.currentTarget.style.borderColor = "#000000";
+              e.currentTarget.style.color = "#000000";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -55,7 +55,7 @@ const styles = {
     height: "100vh",
     display: "flex",
     flexDirection: "column",
-    background: "#000",
+    background: "#ffffff",
     color: "#fff",
     fontFamily: " 'Inter', sans-serif",
     position: "relative",
@@ -78,30 +78,25 @@ const styles = {
   intro: {
     fontSize: "0.8rem",
     letterSpacing: "0.25em",
-    color: "#8a8a8a",
+    color: "#51814e",
     textTransform: "uppercase",
     marginBottom: "20px",
+    fontWeight: "600",
   },
 
   title: {
-    fontSize: "clamp(2.8rem, 10vw, 5.5rem)",
+    fontSize: "clamp(3rem, 10vw, 6rem)",
     fontWeight: "900",
     lineHeight: 1.1,
     marginBottom: "20px",
     fontFamily: "'Inter', sans-serif",
+    color: "#000000",
   },
 
   titleGreen: {
     fontSize: "0.5em",
     fontWeight: "300",
-    color: "#22c553",
-  },
-
-  subtitle: {
-    fontSize: "0.92rem",
-    color: "#999999",
-    letterSpacing: "0.1em",
-    marginBottom: "44px",
+    color: "#22c55e",
   },
 
   buttonContainer: {
@@ -118,8 +113,8 @@ const styles = {
     borderRadius: "8px",
     border: "none",
     cursor: "pointer",
-    backgroundColor: "#22c553",
-    color: "#000",
+    backgroundColor: "#22c55e",
+    color: "#ffffff",
     fontWeight: "bold",
     transition: "all 0.15s ease",
   },
@@ -133,7 +128,8 @@ const styles = {
     border: "1px solid #333",
     cursor: "pointer",
     backgroundColor: "transparent",
-    color: "#999",
+    color: "#000000",
+    fontWeight: "bold",
     transition: "all 0.15s ease",
   },
 };

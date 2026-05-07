@@ -25,7 +25,7 @@ const protect = (req, res, next) => {
     next();
   } catch (err) {
     console.log("AUTH ERROR:", err.message);
-    res.status(401).json({ message: "Invalid token" });
+    res.status(401).json({ message: "Invalid token" }); 
   }
 };
 

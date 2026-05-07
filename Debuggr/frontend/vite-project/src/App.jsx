@@ -4,6 +4,8 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Projects from "./pages/Projects";
+import Bugs from "./pages/Bugs";
 
 function App() {
   return (
@@ -15,7 +17,8 @@ function App() {
 
         {/* ONLY THIS */}
         <Route path="/dashboard" element={<Dashboard />} />
-
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/bugs" element={<Bugs />} />
         <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
     </BrowserRouter>

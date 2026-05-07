@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import AdminHeader from "../components/AdminHeader";
-import { io } from "socket.io-client";
+import { io } from "socket.io-client"; // for real-time updates
 
 const todayString = () => {
   return new Date().toLocaleDateString("en-GB", {
@@ -28,6 +28,7 @@ const Modal = ({ isOpen, onClose, children, title }) => {
     </div>
   );
 };
+
 
 /* Fieldrow (label + value, two-column style */
 const FieldRow = ({ label, children }) => (
@@ -91,7 +92,7 @@ useEffect(() => {
 
   console.log("Socket connected");
 
-  /* 🔥 BUG EVENTS */
+  /* bug events socket*/
   socket.on("bugCreated", (bug) => {
     console.log("bug created", bug);
     fetchBugs();
@@ -110,7 +111,7 @@ useEffect(() => {
     fetchStats();
   });
 
-  /* 🔥 PROJECT EVENTS */
+  /* project events socket  */
   socket.on("projectCreated", (project) => {
     console.log("project created", project);
     fetchProjects();
@@ -170,7 +171,6 @@ useEffect(() => {
       });
 
       const data = await res.json();
-
       if (res.ok) {
         setBugs(data);
       } else {
@@ -294,10 +294,10 @@ const handleDeleteBug = async (bug) => {
 
   const isAllowed =
     bug.reportedBy?._id === currentUserId ||
-    bug.projectId?.teamLead?._id === currentUserId; // 🔥 FIXED
+    bug.projectId?.teamLead?._id === currentUserId; 
 
   if (!isAllowed) {
-    alert("Only the team lead or bug creator can delete this bug 🚫");
+    alert("Only the team lead or bug creator can delete this bug ");
     return;
   }
 
@@ -317,7 +317,7 @@ const handleDeleteBug = async (bug) => {
   fetchBugs();
 };
 
-// 🔴 Update priority
+// Update priority
 const handlePriorityChange = async (bugId, newPriority) => {
   await fetch(`http://localhost:5000/api/bugs/${bugId}`, {
     method: "PUT",
@@ -331,7 +331,7 @@ const handlePriorityChange = async (bugId, newPriority) => {
   fetchBugs();
 };
 
-// 🔵 Update status
+// Update status
 const handleBugStatusChange = async (bugId, newStatus) => {
   await fetch(`http://localhost:5000/api/bugs/${bugId}`, {
     method: "PUT",
@@ -345,7 +345,7 @@ const handleBugStatusChange = async (bugId, newStatus) => {
   fetchBugs();
 };
 
-// 🟢 Assign user
+// Assign user
 const handleAssignChange = async (bugId, userId) => {
   await fetch(`http://localhost:5000/api/bugs/${bugId}`, {
     method: "PUT",
@@ -426,14 +426,14 @@ const handleAssignChange = async (bugId, userId) => {
             </p>
           </header>
 
-          {/* Stats */}
+          {/* user Stats for total bugs, solved bugs and total projects */}
           <div style={statsContainer}>
             <StatBox title="Total Bugs" value={stats.totalBugs} />
             <StatBox title="Solved Bugs" value={stats.solvedBugs} />
             <StatBox title="Projects" value={stats.totalProjects} />
           </div>
 
-          {/* Projects */}
+          {/* Projects tabular display*/}
           <section style={{ marginBottom: "40px" }}>
             <div style={sectionHeader}>
               <h2 style={sectionTitle}>My Projects</h2>
@@ -511,21 +511,25 @@ const handleAssignChange = async (bugId, userId) => {
             </td>
 
             {/* Key (ONLY for team lead) */}
-            {isTeamLead && (
-              <td style={td}>
-                <span
-                  style={keyHidden}
-                  onClick={() =>
-                    setVisibleKeys((prev) => ({
-                      ...prev,
-                      [p._id]: !prev[p._id],
-                    }))
-                  }
-                >
-                  {visibleKeys[p._id] ? p.projectKey : "••••••"}
-                </span>
-              </td>
-            )}
+          <td style={td}>
+  {isTeamLead ? (
+    <span
+      style={keyHidden}
+      onClick={() =>
+        setVisibleKeys(prev => ({
+          ...prev,
+          [p._id]: !prev[p._id],
+        }))
+      }
+    >
+      {visibleKeys[p._id] ? p.projectKey : "••••••"}
+    </span>
+  ) : (
+    <span>
+      Hidden
+    </span>
+  )}
+</td>
 
             {/* Members */}
             <td style={td}>
@@ -548,13 +552,13 @@ const handleAssignChange = async (bugId, userId) => {
   </table>
             ) : (
               <Empty
-                text="No projects yet 🗂️"
+                text="No projects yet"
                 sub="Create a project to get started"
               />
             )}
           </section>
 
-          {/* Recent Bugs */}
+          {/* Recent Bugs tabular display */}
           
 <section>
   <div style={sectionHeader}>
@@ -591,7 +595,7 @@ const handleAssignChange = async (bugId, userId) => {
         {/* Project */}
         <td style={td}>{b.projectId?.title}</td>
 
-        {/* 🔴 PRIORITY (Reporter + Team Lead only) */}
+        {/* PRIORITY (Reporter + Team Lead only) */}
        <td style={td}>
   {(isReporter || isTeamLead) ? (
     editingPriority === b._id ? (
@@ -623,7 +627,7 @@ const handleAssignChange = async (bugId, userId) => {
   )}
 </td>
 
-        {/* 🔵 STATUS (ONLY assigned person) */}
+        {/* STATUS (ONLY assigned person) */}
         <td style={td}>
   {(isAssigned || (!b.assignedTo && (isReporter || isTeamLead))) ? (
     editingBugStatus === b._id ? (
@@ -655,7 +659,7 @@ const handleAssignChange = async (bugId, userId) => {
   )}
 </td>
 
-        {/* 🟢 ASSIGNED TO (Reporter + Team Lead only) */}
+        {/* ASSIGNED TO (Reporter + Team Lead only) */}
         <td style={td}>
   {(isReporter || isTeamLead) ? (
     editingAssign === b._id ? (
@@ -736,13 +740,13 @@ const handleAssignChange = async (bugId, userId) => {
     </table>
   ) : (
     <Empty
-      text="No bugs reported 🐞"
+      text="No bugs reported."
       sub="You're all clear for now!"
     />
   )}
 </section>
 
-          {/* ── Modal ── */}
+          {/* Modal */}
           <Modal
             isOpen={showModal}
             onClose={closeModal}

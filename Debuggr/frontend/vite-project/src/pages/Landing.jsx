@@ -5,16 +5,47 @@ const Landing = () => {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>Debuggr</h1>
-      <p style={styles.subtitle}> Bug tracking made simple.</p>
+      <main style={styles.main}>
+        <p style={styles.intro}>A Real-Time Collaborative Bug Tracking System</p>
 
-      <div style={styles.buttonContainer}>
-        <button style={styles.primaryButton} onClick={() => navigate("/Login")}> Login
-        </button>
+        <h1 style={styles.title}> Debuggr.<br />
+          <span style={styles.titleGreen}>Bug Tracking Made Simple.</span>
+        </h1>
 
-        <button style={styles.secondaryButton} onClick={() => navigate("/Register")}> Register
-        </button>
-      </div>
+        <div style={styles.buttonContainer}>
+          <button
+            style={styles.loginButton}
+            onClick={() => navigate("/Login")}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = "#ffffff";
+              e.currentTarget.style.transform = "translateY(-5px)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = "#22c553";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            Login →
+          </button>
+
+          <button
+            style={styles.registerButton}
+            onClick={() => navigate("/Register")}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = "#22c553";
+              e.currentTarget.style.color = "#22c553";
+              e.currentTarget.style.transform = "translateY(-5px)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = "#333";
+              e.currentTarget.style.color = "#999";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            Register
+          </button>
+        </div>
+      </main>
     </div>
   );
 };
@@ -24,43 +55,86 @@ const styles = {
     height: "100vh",
     display: "flex",
     flexDirection: "column",
+    background: "#000",
+    color: "#fff",
+    fontFamily: " 'Inter', sans-serif",
+    position: "relative",
+    overflow: "hidden",
+  },
+
+
+  main: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    background: "#0f172a",
-    color: "white",
     textAlign: "center",
+    padding: "0 24px",
+    position: "relative",
+    zIndex: 1,
   },
+
+  intro: {
+    fontSize: "0.8rem",
+    letterSpacing: "0.25em",
+    color: "#8a8a8a",
+    textTransform: "uppercase",
+    marginBottom: "20px",
+  },
+
   title: {
-    fontSize: "4rem",
-    marginBottom: "10px",
-    letterSpacing: "2px",
+    fontSize: "clamp(2.8rem, 10vw, 5.5rem)",
+    fontWeight: "900",
+    lineHeight: 1.1,
+    marginBottom: "20px",
+    fontFamily: "'Inter', sans-serif",
   },
+
+  titleGreen: {
+    fontSize: "0.5em",
+    fontWeight: "300",
+    color: "#22c553",
+  },
+
   subtitle: {
-    fontSize: "1.2rem",
-    color: "#94a3b8",
-    marginBottom: "30px",
+    fontSize: "0.92rem",
+    color: "#999999",
+    letterSpacing: "0.1em",
+    marginBottom: "44px",
   },
+
   buttonContainer: {
     display: "flex",
-    gap: "15px",
+    gap: "12px",
+    alignItems: "center",
   },
-  primaryButton: {
-    padding: "10px 20px",
-    fontSize: "1rem",
+
+  loginButton: {
+    padding: "11px 28px",
+    fontSize: "0.9rem",
+    letterSpacing: "0.08em",
+    fontFamily: "'Inter', sans-serif",
     borderRadius: "8px",
     border: "none",
     cursor: "pointer",
-    backgroundColor: "#3b82f6",
-    color: "white",
+    backgroundColor: "#22c553",
+    color: "#000",
+    fontWeight: "bold",
+    transition: "all 0.15s ease",
   },
-  secondaryButton: {
-    padding: "10px 20px",
-    fontSize: "1rem",
+
+  registerButton: {
+    padding: "11px 28px",
+    fontSize: "0.9rem",
+    letterSpacing: "0.08em",
+    fontFamily: "'Inter', sans-serif",
     borderRadius: "8px",
-    border: "1px solid #3b82f6",
+    border: "1px solid #333",
     cursor: "pointer",
     backgroundColor: "transparent",
-    color: "#3b82f6",
+    color: "#999",
+    transition: "all 0.15s ease",
   },
 };
 

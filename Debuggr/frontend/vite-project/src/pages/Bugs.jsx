@@ -71,7 +71,7 @@ const Bugs = () => {
         <AdminHeader user={user} />
 
         <div style={contentWrapper}>
-          <h2 style={sectionTitle}>All Bugs 🐞</h2>
+          <h2 style={sectionTitle}>All Bugs </h2>
 
           {/* filter bar*/}
           <div style={filterBar}>

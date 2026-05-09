@@ -62,7 +62,7 @@ const Projects = () => {
         <AdminHeader user={user} />
 
         <div style={contentWrapper}>
-          <h2 style={sectionTitle}>All Projects 📁</h2>
+          <h2 style={sectionTitle}>All Projects </h2>
 
           {projects.length > 0 ? (
             <table style={tableStyle}>
@@ -161,7 +161,7 @@ const Projects = () => {
   );
 };
 
-/* 🔥 EXACT SAME DASHBOARD STYLES */
+/* styles same as dash for consistency in ui*/
 
 const rootLayout = {
   display: "flex",

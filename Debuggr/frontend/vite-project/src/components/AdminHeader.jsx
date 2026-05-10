@@ -69,7 +69,7 @@ const AdminHeader = ({ user }) => {
   );
 };
 
-/* 🔹 Styles */
+/* styles*/
 
 const container = {
   display: "flex",

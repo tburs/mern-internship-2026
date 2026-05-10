@@ -31,7 +31,7 @@ const Sidebar = ({ onCreateProject , onJoinProject, onLogBug}) => {   // F IX
   );
 };
 
-/* 🔹 Components */
+/* Components */
 
 const NavItem = ({ to, label, active }) => (
   <Link
@@ -47,27 +47,24 @@ const NavItem = ({ to, label, active }) => (
   </Link>
 );
 
-const ActionButton = ({ label, onClick }) => (   // ✅ FIX
+const ActionButton = ({ label, onClick }) => (  
   <div style={actionBtn} onClick={onClick}>
     {label}
   </div>
 );
 
-/* 🔹 Styles */
-
+/* styles */
 const sidebar = {
   width: "250px",
   background: "#ffffff",
   borderRight: "1px solid #e5e7eb",
   padding: "25px 20px",
 };
-
 const logo = {
   fontSize: "22px",
   fontWeight: "600",
   marginBottom: "40px",
 };
-
 const navItem = {
   display: "block",
   padding: "12px 14px",
@@ -76,7 +73,6 @@ const navItem = {
   marginBottom: "8px",
   transition: "all 0.2s",
 };
-
 const actionBtn = {
   padding: "12px 14px",
   marginBottom: "10px",
@@ -86,5 +82,4 @@ const actionBtn = {
   color: "white",
   background: "#22c55e",
 };
-
 export default Sidebar;

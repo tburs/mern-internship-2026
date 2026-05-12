@@ -17,7 +17,7 @@ function App() {
     try {
 
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=a0ab8930caeaf4e6b811b71fc5ffebc6&units=metric`
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${import.meta.env.VITE_API_KEY}&units=metric`
       );
 
       console.log(response);

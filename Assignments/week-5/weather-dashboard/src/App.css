@@ -1,0 +1,75 @@
+.container {
+  width: 400px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 30px;
+  text-align: center;
+  color: rgb(0, 0, 0);
+}
+
+h1 {
+  margin-bottom: 25px;
+  font-size: 32px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  outline: none;
+  font-size: 16px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background-color: white;
+  color: #0077ff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #e6e6e6;
+}
+
+.weather-box {
+  margin-top: 25px;
+}
+
+.weather-box h2 {
+  margin-bottom: 10px;
+}
+
+.weather-box p {
+  margin: 8px 0;
+  font-size: 18px;
+}
+
+.error {
+  color: #ffdddd;
+  margin-top: 15px;
+}
+
+.loading {
+  margin-top: 15px;
+}
+
+.app {
+  width: 100vw;
+  height: 100vh;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
